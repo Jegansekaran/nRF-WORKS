@@ -1,0 +1,3 @@
+interface of HX711 to nRF52DK.
+
+LOAD-CELL instructions performed using nRF52DK BLE

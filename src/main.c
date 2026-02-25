@@ -1,7 +1,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/bluetooth/bluetooth.h>
-//#include <zephyr/logging/log.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/bluetooth/conn.h>
 #include <zephyr/bluetooth/gap.h>
 #include <bluetooth/services/nus.h>
@@ -10,7 +10,7 @@
 #include <zephyr/storage/flash_map.h>
 #include <stdlib.h>
 
-//LOG_MODULE_REGISTER(LOAD_TEST, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(LOAD_TEST, LOG_LEVEL_INF);
 /* ---------------- THREAD CONFIG ---------------- */
 #define STACKSIZE 1024
 #define PRIORITY_CALIB 6
@@ -53,6 +53,8 @@ static struct nvs_fs fs;
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
 
 struct bt_conn *my_conn = NULL;
+
+
 
 static struct bt_le_adv_param *adv_param = BT_LE_ADV_PARAM(
 	(BT_LE_ADV_OPT_CONNECTABLE |
@@ -247,27 +249,30 @@ static void nus_received(struct bt_conn *conn,
     }
 
     else if((val >> 28) == 0x3){
-        //LOG_INF("Calibration command received.");
+        LOG_INF("Calibration command received N.");
         k_sem_give(&start_nload);
      }
     else if((val >> 28) == 0x4){
-        //LOG_INF("Calibration command received.");
+        LOG_INF("Calibration command received K.");
         k_sem_give(&start_kload);
     }
     else if((val >> 28) == 0x5){
         atomic_set(&deci_pnt, 1);
-         //LOG_INF("Calibration command received.");
+         LOG_INF("Calibration command received DEC 1.");
          //k_sem_give(&start_kload);
     }
     else if((val >> 28) == 0x6){
         atomic_set(&deci_pnt, 2);
-         //LOG_INF("Calibration command received.");
+         LOG_INF("Calibration command received DEC 2.");
          //k_sem_give(&start_kload);
     }
     else if((val >> 28) == 0x7){
         atomic_set(&deci_pnt, 3);
-         //LOG_INF("Calibration command received.");
+         LOG_INF("Calibration command received DEC 3.");
          //k_sem_give(&start_kload);
+    }
+    else if((val >> 28) == 0x8){
+        ;
     }
     
 }
@@ -282,22 +287,22 @@ void calibration_thread(void)
 
             if (!load_calibration())
             {
-                //LOG_INF("Waiting for known load (100-1000g)...");
+                LOG_INF("Waiting for known load (100-1000g)...");
                     
                 k_sem_take(&load_write, K_FOREVER);
                     
-                //LOG_INF("Remove weight for tare...");
+                LOG_INF("Remove weight for tare...");
                 k_sleep(K_SECONDS(2));
 
-                k_sem_give(&start_nload);
+                k_sem_take(&start_nload,K_FOREVER);
 
                 offset_value();
                     
-                //LOG_INF("Apply known load %d g", set_load);
+                LOG_INF("Apply known load %d g", set_load);
                 k_sleep(K_SECONDS(5));
                 
                 k_sem_take(&start_kload, K_FOREVER);
-                //LOG_INF("Calibrating...");
+                LOG_INF("Calibrating...");
 
                 if (calibrate(set_load)){
                 
@@ -305,14 +310,15 @@ void calibration_thread(void)
                        atomic_set(&cali_done, 0);
                        k_sem_give(&calib_done_sem);
 
-                       //LOG_INF("Calibration done!");
+                       LOG_INF("Calibration done!");
                    }
                 }
             }
+
             else {
                 k_sem_take(&pause, K_FOREVER);
-                //LOG_INF("Calibration resumed.");
-             }
+                LOG_INF("\n");
+            }
     }
 }
 /* ---------------- SEND THREAD ---------------- */
@@ -324,11 +330,6 @@ void send_thread(void)
     k_sem_take(&calib_done_sem, K_FOREVER);
 
     while (1){
-
-        /*if (!atomic_get(&connected)) {
-            k_sem_take(&ble_connected_sem, K_FOREVER);
-            continue;
-        }*/
 
         if(atomic_get(&load_received)){
 
@@ -352,13 +353,10 @@ void send_thread(void)
                     break;
             }
             
-
-            
-
             bt_nus_send(NULL, tx_buf, strlen(tx_buf));
 
             k_sleep(K_MSEC(NOTIFY_INTERVAL)); 
-
+            LOG_INF("Weight sent: %d g", weight);
             atomic_set(&load_received, 0);
             
             
@@ -371,6 +369,7 @@ void send_thread(void)
 
 void on_connected(struct bt_conn *conn, uint8_t err)
 {
+    my_conn = bt_conn_ref(conn);
 	atomic_set(&connected, 1);
     k_sem_give(&ble_connected_sem);
 	update_phy(my_conn);	
@@ -378,6 +377,12 @@ void on_connected(struct bt_conn *conn, uint8_t err)
 
 static void disconnected_cb(struct bt_conn *conn, uint8_t reason)
 {
+       if (my_conn) {
+        // Release our reference — stack can now free the conn object
+        bt_conn_unref(my_conn);
+        my_conn = NULL;
+    }
+
     atomic_set(&connected, 0);
 }
 
@@ -386,7 +391,7 @@ struct bt_conn_cb connection_callbacks = {
 	.disconnected = disconnected_cb,
 };
 
-void main(void)
+int main(void)
 {
     int err;
 
@@ -395,7 +400,7 @@ void main(void)
     err = bt_enable(NULL);
     if (err) {
      
-        return;
+        return -1;
     }
 
     gpio_pin_configure_dt(&dt_pin, GPIO_INPUT | GPIO_PULL_DOWN);
@@ -415,7 +420,7 @@ void main(void)
         k_sleep(K_FOREVER);
 	}*/
 
-    return;
+    return -1;
 }
 
 K_THREAD_DEFINE(calib_id, STACKSIZE,

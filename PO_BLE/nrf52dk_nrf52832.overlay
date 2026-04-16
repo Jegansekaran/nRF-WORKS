@@ -1,0 +1,20 @@
+/ {
+    my_pins {
+        compatible = "gpio-keys";
+
+        do_pin1: do_pin1 {
+            gpios = <&gpio0 11 GPIO_ACTIVE_HIGH>;
+            label = "DO_PIN1";
+        };
+
+        sck2: sck2 {
+            gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>;
+            label = "SCK2";
+        };
+
+        vcc: vcc {
+            gpios = <&gpio0 3 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "VCC";
+        };
+    };
+};

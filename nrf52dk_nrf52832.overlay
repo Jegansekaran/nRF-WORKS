@@ -1,0 +1,55 @@
+&pinctrl {
+    uart0_default: uart0_default {
+        group1 {
+            /* TX — no pull needed, driven output */
+            psels = <NRF_PSEL(UART_TX, 0, 6)>;
+        };
+        group2 {
+            /* RX — pull-up keeps line HIGH when VW101 is idle/disconnected */
+            psels = <NRF_PSEL(UART_RX, 0, 8)>;
+            bias-pull-up;
+        };
+    };
+
+    uart0_sleep: uart0_sleep {
+        group1 {
+            /* TX disconnected during sleep */
+            psels = <NRF_PSEL(UART_TX, 0, 6)>;
+            low-power-enable;
+        };
+        group2 {
+            /* RX still pulled up during sleep — prevents float */
+            psels = <NRF_PSEL(UART_RX, 0, 8)>;
+            low-power-enable;
+            bias-pull-up;
+        };
+    };
+};
+
+&uart0 {
+    status = "okay";
+    current-speed = <9600>;
+    pinctrl-0 = <&uart0_default>;
+    pinctrl-1 = <&uart0_sleep>;
+    pinctrl-names = "default", "sleep";
+};
+
+/ {
+    aliases {
+        vw101-uart = &uart0;
+    };
+
+    my_pins {
+        compatible = "gpio-keys";
+
+        vcc1: vcc1 {
+            gpios = <&gpio0 3 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "VCC1";
+        };
+
+        vcc2: vcc2 {
+            gpios = <&gpio0 4 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "VCC2";
+        };
+    };
+};

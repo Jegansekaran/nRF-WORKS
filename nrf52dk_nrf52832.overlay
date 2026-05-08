@@ -1,0 +1,43 @@
+/ {
+        
+    hx711_0: hx711_0 {
+        compatible = "gpio-keys";
+        dt_0: dt_0 {
+        gpios  = <&gpio0 28 GPIO_ACTIVE_HIGH>;
+        };
+        sck_0: sck_0 {
+            gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>;
+        };
+    };
+
+    hx711_1: hx711_1 {
+        compatible = "gpio-keys";
+        dt_1: dt_1 {
+            gpios = <&gpio0 15 GPIO_ACTIVE_HIGH>;
+        };
+        sck_1: sck_1 {
+            gpios = <&gpio0 14 GPIO_ACTIVE_HIGH>;
+        };
+    };
+
+    hx711_2: hx711_2 {
+        compatible = "gpio-keys";
+        dt_2: dt_2 {
+            gpios = <&gpio0 25 GPIO_ACTIVE_HIGH>;
+        };
+        sck_2: sck_2 {
+            gpios = <&gpio0 30 GPIO_ACTIVE_HIGH>;
+        };
+    };
+
+    hx711_3: hx711_3 {
+        compatible = "gpio-keys";
+        dt_3: dt_3 {
+            gpios = <&gpio0 18 GPIO_ACTIVE_HIGH>;
+        };
+        sck_3: sck_3 {
+            gpios = <&gpio0 16 GPIO_ACTIVE_HIGH>;
+        };
+    };
+ 
+};
